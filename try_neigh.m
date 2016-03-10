@@ -1,10 +1,10 @@
 clear all;
 load('test1.mat');
 
-poor_radis = 20;
+poor_radis = 40;
 best_radis = 10;
 neigh_max = 20;
-test_duration = 2000;   %this is 100s
+test_duration = 60000;   %this is 600s
 target_addr = 65;
 best_neigh_limit = 10;
 
@@ -116,95 +116,94 @@ for test_frame = 1:test_duration
             hb_time(node) = hb_time(node) + 100 + round(rand(1)*10);
         end
     end
-    if rem(test_frame, 500) == 0
+    if rem(test_frame, 1000) == 0
         %predefine th size
-
-for i = 1:100
-    for j = 1:neigh_max
-        d = double(neigh_table(i,j).linkq);
-        [crap,e] = log2(max(d));
-        neigh_table_d(i,j).linkq = sum(rem(floor(d*pow2(1-max(1,e):0)),2));
-        neigh_table_d(i,j).addr = neigh_table(i,j).addr;
-    end
-end
-
-j = 0;
-for i = 1:neigh_max
-    if neigh_table_d(target_addr,i).addr > 0
-        j = j + 1;
-        neigh_target(j,1) = neigh_table_d(target_addr,i).addr;
-        neigh_target(j,2) = neigh_table_d(target_addr,i).linkq;
-    end
-end
-
-group = zeros([1 100]);
-[Y, I] = sort(neigh_target(:,2), 'descend');
-neigh_target_sort = neigh_target(I,:);
-
-
-%group 0 is all
-%group 1 is within range
-%group 2 is in neigh table
-%group 3 is best neigh
-%group 4 is self
-for i = 1:length(neigh_target)
-    group(neigh_target(i,1)) = 2;
-end
-
-if length(neigh_target) > best_neigh_limit
-    for i = 1:best_neigh_limit
-        group(neigh_target_sort(i,1)) = 3;
-    end
-end
-
-for i = 1:100
-    if(pdist([coordinate_x(target_addr),coordinate_y(target_addr);coordinate_x(i),coordinate_y(i)]) < poor_radis)
-        if group(i) == 0
-            group(i) = 1;
-        end
-    end
-end
-
-best_neigh_match_count = 0;
-for i = 1:best_neigh_limit
-    for j = 1:best_neigh_limit
-        if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
-            best_neigh_match_count = best_neigh_match_count + 1;
-        end
-    end
-end
-fprintf(fid_best, '%d\n', best_neigh_match_count);
-
-neigh_match_count = 0;
-if length(neigh_target_sort) == neigh_max
-    for i = 1:neigh_max
-        for j = 1:neigh_max
-            if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
-                neigh_match_count = neigh_match_count + 1;
+        for i = 1:100
+            for j = 1:neigh_max
+                d = double(neigh_table(i,j).linkq);
+                [crap,e] = log2(max(d));
+                neigh_table_d(i,j).linkq = sum(rem(floor(d*pow2(1-max(1,e):0)),2));
+                neigh_table_d(i,j).addr = neigh_table(i,j).addr;
             end
         end
-    end
-else
-    for i = 1:length(neigh_target_sort)
-        for j = 1:length(neigh_target_sort)
-            if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
-                neigh_match_count = neigh_match_count + 1;
+
+        j = 0;
+        for i = 1:neigh_max
+            if neigh_table_d(target_addr,i).addr > 0
+                j = j + 1;
+                neigh_target(j,1) = neigh_table_d(target_addr,i).addr;
+                neigh_target(j,2) = neigh_table_d(target_addr,i).linkq;
             end
         end
-    end
-end
-fprintf(fid_neigh, '%d\n', neigh_match_count); 
 
-group(target_addr) = 4;
-gscatter(coordinate_x, coordinate_y, group,'kmgrb','xosdp');
-xlabel([' ' num2str(neigh_match_count) ' neigh match,  ' num2str(best_neigh_match_count) ' best match']);
-title(num2str(test_frame));
+        group = zeros([1 100]);
+        [Y, I] = sort(neigh_target(:,2), 'descend');
+        neigh_target_sort = neigh_target(I,:);
 
-filename = sprintf(num2str(test_frame));
-filename = regexprep(filename,':','-','all');
-print('-dpng','-zbuffer','-r200',filename);
-disp(['frame ' num2str(test_frame) ' finished']);
-        
+
+        %group 0 is all
+        %group 1 is within range
+        %group 2 is in neigh table
+        %group 3 is best neigh
+        %group 4 is self
+        for i = 1:length(neigh_target)
+            group(neigh_target(i,1)) = 2;
+        end
+
+        if length(neigh_target) > best_neigh_limit
+            for i = 1:best_neigh_limit
+                group(neigh_target_sort(i,1)) = 3;
+            end
+        end
+
+        for i = 1:100
+            if(pdist([coordinate_x(target_addr),coordinate_y(target_addr);coordinate_x(i),coordinate_y(i)]) < poor_radis)
+                if group(i) == 0
+                    group(i) = 1;
+                end
+            end
+        end
+
+        best_neigh_match_count = 0;
+        for i = 1:best_neigh_limit
+            for j = 1:best_neigh_limit
+                if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
+                    best_neigh_match_count = best_neigh_match_count + 1;
+                end
+            end
+        end
+        fprintf(fid_best, '%d\n', best_neigh_match_count);
+
+        neigh_match_count = 0;
+        if length(neigh_target_sort) == neigh_max
+            for i = 1:neigh_max
+                for j = 1:neigh_max
+                    if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
+                        neigh_match_count = neigh_match_count + 1;
+                    end
+                end
+            end
+        else
+            for i = 1:length(neigh_target_sort)
+                for j = 1:length(neigh_target_sort)
+                    if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
+                        neigh_match_count = neigh_match_count + 1;
+                    end
+                end
+            end
+        end
+        fprintf(fid_neigh, '%d\n', neigh_match_count); 
+
+        group(target_addr) = 4;
+        gscatter(coordinate_x, coordinate_y, group,'kmgrb','xosdp');
+        xlabel([' ' num2str(neigh_match_count) ' neigh match,  ' num2str(best_neigh_match_count) ' best match,  ' num2str(length(ideal_neigh)) ' in range']);
+        title(num2str(test_frame));
+
+        filename = sprintf(num2str(test_frame));
+        filename = regexprep(filename,':','-','all');
+        print('-dpng','-zbuffer','-r200',filename);
+        disp(['frame ' num2str(test_frame) ' finished']);
+
     end
 end
 
