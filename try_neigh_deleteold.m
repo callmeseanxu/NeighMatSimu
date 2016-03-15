@@ -67,15 +67,15 @@ for test_frame = 1:test_duration
                     if x < poor_radis
                         %this hb may be heart, make neigh
                         %table update
-                        worst_index = 0;
+                        oldest_index = 0;
                         first_inactive = 0;
                         for neigh_index = 1:neigh_max
                             if(first_inactive == 0) && (neigh_table(othernode, neigh_index).addr ==0)
                                 first_inactive = neigh_index;
                             end
                             
-                            if (worst_index == 0) || (bitcount(neigh_table(othernode, neigh_index).linkq) < bitcount(neigh_table(othernode, worst_index).linkq))
-                                worst_index = neigh_index;
+                            if (oldest_index == 0) || (neigh_table(othernode, neigh_index).last_seen < neigh_table(othernode, oldest_index).last_seen)
+                                oldest_index = neigh_index;
                             end
                             
                             if node == neigh_table(othernode, neigh_index).addr
@@ -92,9 +92,9 @@ for test_frame = 1:test_duration
                                 end
                             else
                                 if first_inactive == 0      %this means table is full
-                                    neigh_table(othernode, worst_index).addr = node;
-                                    neigh_table(othernode, worst_index).last_seen = test_frame;
-                                    neigh_table(othernode, worst_index).linkq = 1;
+                                    neigh_table(othernode, oldest_index).addr = node;
+                                    neigh_table(othernode, oldest_index).last_seen = test_frame;
+                                    neigh_table(othernode, oldest_index).linkq = 1;
                                 else
                                     neigh_table(othernode, first_inactive).addr = node;
                                     neigh_table(othernode, first_inactive).last_seen = test_frame;
