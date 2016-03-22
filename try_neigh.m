@@ -1,7 +1,7 @@
 clear all;
 load('test1.mat');
 
-test_seconds = 500;
+test_seconds = 5000;
 picture_seconds = 5;
 poor_radis = 40;
 best_radis = 10;
@@ -29,10 +29,10 @@ hb_time = round(rand([1 100])*100);
 %predefine th size
 neigh_table(100,neigh_max).addr = 0;
 neigh_table(100,neigh_max).last_seen = 0;
-neigh_table(100,neigh_max).linkq = uint16(0);
+neigh_table(100,neigh_max).linkq = 0;
 
 neigh_table_d(100,neigh_max).addr = 0;
-neigh_table_d(100,neigh_max).linkq = uint16(0);
+neigh_table_d(100,neigh_max).linkq = 0;
 
 neigh_table_addr = zeros(100,neigh_max);
 
@@ -40,7 +40,7 @@ for i = 1:100
     for j = 1:neigh_max
         neigh_table(i,j).addr = 0;
         neigh_table(i,j).last_seen = 0;
-        neigh_table(i,j).linkq = uint16(0);
+        neigh_table(i,j).linkq = 0;
     end
 end
 
@@ -176,6 +176,16 @@ for test_frame = 1:test_duration
             end
             mutual_match_percent(test_frame/picture_seconds/100) = double_edges/total_edges;
         end
+    end
+    
+    if rem(test_frame, picture_seconds*100*20) == 0
+        plot(mean(neigh_match_percent(:,1:test_frame/picture_seconds/100)));
+        xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_match_percent(1:test_frame/picture_seconds/100,:)))) ' ']);
+        print('-dpng','-zbuffer','-r200',' match_neigh');
+
+        plot(mutual_match_percent(1:test_frame/picture_seconds/100));
+        xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_match_percent(1:test_frame/picture_seconds/100))) ' ']);
+        print('-dpng','-zbuffer','-r200','mutual_neigh');
     end
 end
 
