@@ -76,9 +76,16 @@ for test_frame = 1:test_duration
                         %if (x < best_radis) || (rand_num > (x - best_radis))
                         if rand_num > x
                             if neigh_index < neigh_max
+                                
+                                xxx_linkq = neigh_table(othernode, neigh_index).linkq;        
+                                
                                 neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2 + 1;
-                                if neigh_table(othernode, neigh_index).linkq > 2^16
-                                    neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq - 2^16;
+                                if neigh_table(othernode, neigh_index).linkq >= 65536
+                                    neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq - 65536;
+                                end
+                                
+                                if(neigh_table(othernode, neigh_index).linkq > 65536)
+                                    disp(['frame ' num2str(test_frame) ' finished']);
                                 end
                             else
                                 if first_inactive == 0      %this means table is full
@@ -94,10 +101,16 @@ for test_frame = 1:test_duration
                         else
                             if neigh_index < neigh_max
                                 if(neigh_table(othernode, neigh_index).linkq >= 1)
+                                    xxx_linkq = neigh_table(othernode, neigh_index).linkq;                                            
+                                    
                                     neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2;
-                                    if neigh_table(othernode, neigh_index).linkq > 2^16
-                                        neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq - 2^16;
+                                    if neigh_table(othernode, neigh_index).linkq >= 65536
+                                        neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq - 65536;
                                     end
+                                    
+                                    if(neigh_table(othernode, neigh_index).linkq > 65536)
+                                        disp(['frame ' num2str(test_frame) ' finished']);
+                                    end                                    
                                 end
                             end
                         end
@@ -105,6 +118,7 @@ for test_frame = 1:test_duration
                         %need not to do anything, could not hear this hb
                         %no code here
                     end
+                    
                 end                
             end
             hb_time(node) = hb_time(node) + 100 + round(rand(1)*10);
@@ -180,7 +194,7 @@ for test_frame = 1:test_duration
     
     if rem(test_frame, picture_seconds*100*20) == 0
         plot(mean(neigh_match_percent(:,1:test_frame/picture_seconds/100)));
-        xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_match_percent(1:test_frame/picture_seconds/100,:)))) ' ']);
+        xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_match_percent(:,1:test_frame/picture_seconds/100)))) ' ']);
         print('-dpng','-zbuffer','-r200',' match_neigh');
 
         plot(mutual_match_percent(1:test_frame/picture_seconds/100));
