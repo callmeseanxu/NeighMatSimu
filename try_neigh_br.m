@@ -57,6 +57,7 @@ for test_frame = 1:test_duration
                         %table update
                         worst_index = 0;
                         first_inactive = 0;
+			found_in_neigh_table = 0;
                         for neigh_index = 1:neigh_max
                             if(first_inactive == 0) && (neigh_table(othernode, neigh_index).addr ==0)
                                 first_inactive = neigh_index;
@@ -73,7 +74,7 @@ for test_frame = 1:test_duration
                         rand_num = round(rand(1)*poor_radis);
                         %if (x < best_radis) || (rand_num > (x - best_radis))
                         if rand_num > x
-                            if neigh_index < neigh_max
+                            if found_in_neigh_table > 0
                                 neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2 + 1;
                                 if neigh_table(othernode, neigh_index).linkq >= 65536
                                     neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq - 65536;
@@ -94,7 +95,7 @@ for test_frame = 1:test_duration
                                 end
                             end
                         else
-                            if neigh_index < neigh_max
+                            if found_in_neigh_table > 0
                                 if(neigh_table(othernode, neigh_index).linkq >= 1)
                                     neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2;
                                     if neigh_table(othernode, neigh_index).linkq >= 65536
@@ -120,6 +121,7 @@ for test_frame = 1:test_duration
         if rem(hb_count(node), 16) == 15
             %first, find best neighs
             j = 0;
+            neigh_target = 0;
             for i = 1:neigh_max
                 if neigh_table_d(node,i).addr > 0
                     j = j + 1;
@@ -128,7 +130,7 @@ for test_frame = 1:test_duration
                 end
             end
 
-            if i > 0
+            if j > 0
                 [~, I] = sort(neigh_target(:,2), 'descend');
                 neigh_target_sort = neigh_target(I,:);
                 for brother_index = 1:min(5,length(neigh_target_sort(:,1)))
@@ -184,14 +186,17 @@ for test_frame = 1:test_duration
     end
     
     if rem(test_frame, picture_seconds*100) == 0
-        %predefine th size
+        %predefine the size
+        if rem(test_frame, picture_seconds*100*100) == 0
+            disp('ongoing');
+        end
         for i = 1:100
             for j = 1:neigh_max
                 neigh_table_d(i,j).linkq = bitcount(neigh_table(i,j).linkq);
                 neigh_table_d(i,j).addr = neigh_table(i,j).addr;
             end
         end
-
+        
         for target_addr = 1:100
             j = 0;
             neigh_target = zeros([2 1]);
@@ -229,7 +234,6 @@ for test_frame = 1:test_duration
             
             [~, I] = sort(ideal_neigh(:,2), 'ascend');
             ideal_neigh_sort = ideal_neigh(I,:);
-
                         
             best_neigh_match_count = 0;
             neigh_max_compare = neigh_ideal_statistics(target_addr,1);
