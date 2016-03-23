@@ -8,7 +8,7 @@ best_radis = 10;
 neigh_max = 20;
 test_duration = test_seconds*100;   %this is 600s
 target_addr = 65;
-best_neigh_limit = 5;
+best_neigh_limit = 10;
 
 hb_time = round(rand([1 100])*100);
 hb_count = zeros([1 100]);
@@ -35,6 +35,15 @@ end
 
 neigh_match_percent = zeros(100,test_seconds/picture_seconds);
 mutual_match_percent = zeros(1,test_seconds/picture_seconds);
+neigh_best_match_percent = zeros(100,test_seconds/picture_seconds);
+mutual_best_match_percent = zeros(1,test_seconds/picture_seconds);
+
+node_distance = zeros([100 100]);
+for i = 1:100
+    for j = 1:100
+        node_distance(i,j) = pdist([coordinate_x(i),coordinate_y(i);coordinate_x(j),coordinate_y(j)]);
+    end
+end
 
 for test_frame = 1:test_duration
     for node = 1:100
@@ -42,7 +51,7 @@ for test_frame = 1:test_duration
             %fire a heart beat, check if neighbor heard this
             for othernode = 1:100
                 if othernode ~= node
-                    x = pdist([coordinate_x(othernode),coordinate_y(othernode);coordinate_x(node),coordinate_y(node)]);
+                    x = node_distance(othernode,node);
                     if x < poor_radis
                         %this hb may be heart, make neigh
                         %table update
@@ -98,7 +107,6 @@ for test_frame = 1:test_duration
                         %need not to do anything, could not hear this hb
                         %no code here
                     end
-
                 end
             end
             hb_time(node) = hb_time(node) + 100 + round(rand(1)*10);
@@ -123,7 +131,7 @@ for test_frame = 1:test_duration
             if i > 0
                 [~, I] = sort(neigh_target(:,2), 'descend');
                 neigh_target_sort = neigh_target(I,:);
-                for brother_index = 1:min(4,length(neigh_target_sort(:,1)))
+                for brother_index = 1:min(5,length(neigh_target_sort(:,1)))
                     worst_index = 0;
                     first_inactive = 0;
                     for neigh_index = 1:neigh_max
@@ -135,11 +143,18 @@ for test_frame = 1:test_duration
                         end
 
                         if node == neigh_table(neigh_target_sort(brother_index,1), neigh_index).addr
-                            neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score = 16;
-                            neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time = 32;
                             break
                         end
-
+                    end
+                    
+                    if neigh_index < neigh_max
+                        if brother_index  == 1
+                            neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score = 16;
+                        else
+                            neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score = 8;
+                        end
+                        neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time = 32;
+                    else
                         if first_inactive == 0      %this means table is full
                             neigh_table(neigh_target_sort(brother_index,1), worst_index).addr = node;
                             neigh_table(neigh_target_sort(brother_index,1), worst_index).last_seen = test_frame;
@@ -167,7 +182,7 @@ for test_frame = 1:test_duration
         end
 
     end
-
+    
     if rem(test_frame, picture_seconds*100) == 0
         %predefine th size
         for i = 1:100
@@ -179,6 +194,7 @@ for test_frame = 1:test_duration
 
         for target_addr = 1:100
             j = 0;
+            neigh_target = zeros([2 1]);
             for i = 1:neigh_max
                 if neigh_table_d(target_addr,i).addr > 0
                     j = j + 1;
@@ -192,18 +208,31 @@ for test_frame = 1:test_duration
 
             j = 0;
             for i = 1:100
-                radis_ideal_neigh = pdist([coordinate_x(i),coordinate_y(i);coordinate_x(target_addr),coordinate_y(target_addr)]);
+                radis_ideal_neigh = node_distance(i, target_addr);
+                if (radis_ideal_neigh < best_radis) && (i ~= target_addr)
+                    j = j + 1;
+                end
+            end
+            neigh_ideal_statistics(target_addr,1) = j;
+            
+            j = 0;
+            ideal_neigh = zeros([2 1]);
+            for i = 1:100
+                radis_ideal_neigh = node_distance(i, target_addr);
                 if (radis_ideal_neigh < poor_radis) && (i ~= target_addr)
                     j = j + 1;
                     ideal_neigh(j,1) = i;
                     ideal_neigh(j,2) = radis_ideal_neigh;
                 end
             end
+            neigh_ideal_statistics(target_addr,2) = j;
+            
             [~, I] = sort(ideal_neigh(:,2), 'ascend');
             ideal_neigh_sort = ideal_neigh(I,:);
 
+                        
             best_neigh_match_count = 0;
-            neigh_max_compare = min(min(length(neigh_target_sort(:,1)),best_neigh_limit),min(length(ideal_neigh_sort(:,1)),best_neigh_limit));
+            neigh_max_compare = neigh_ideal_statistics(target_addr,1);
             for i = 1:neigh_max_compare
                 for j = 1:neigh_max_compare
                     if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
@@ -211,31 +240,62 @@ for test_frame = 1:test_duration
                     end
                 end
             end
-
-            neigh_match_percent(target_addr, test_frame/picture_seconds/100) = best_neigh_match_count/neigh_max_compare;
-            for i = 1:100
-                for j = 1:neigh_max
-                    neigh_table_addr(i,j) = neigh_table_d(i,j).addr;
-                end
+            
+            if(neigh_ideal_statistics(target_addr,1) > 0)
+                neigh_best_match_percent(target_addr, test_frame/picture_seconds/100) = best_neigh_match_count/neigh_max_compare;
+            else
+                neigh_best_match_percent(target_addr, test_frame/picture_seconds/100) = 0;
             end
-
-            total_edges = 0;
-            double_edges = 0;
-            for i = 1:100
-                for j = 1:neigh_max
-                    if(neigh_table_addr(i,j) > 0)
-                        total_edges = total_edges + 1;
-                        if isempty(find(neigh_table_addr(neigh_table_addr(i,j),:) == i)) == 0
-                            double_edges = double_edges + 1;
-                        end
+            
+            neigh_match_count = 0;
+            neigh_max_compare = min(min(length(neigh_target_sort(:,1)),best_neigh_limit),min(length(ideal_neigh_sort(:,1)),best_neigh_limit));
+            for i = 1:neigh_max_compare
+                for j = 1:neigh_max_compare
+                    if neigh_target_sort(i,1) == ideal_neigh_sort(j,1)
+                        neigh_match_count = neigh_match_count + 1;
                     end
                 end
             end
-            mutual_match_percent(test_frame/picture_seconds/100) = double_edges/total_edges;
+
+            neigh_match_percent(target_addr, test_frame/picture_seconds/100) = neigh_match_count/neigh_max_compare;
         end
+        
+        for i = 1:100
+            for j = 1:neigh_max
+                neigh_table_addr(i,j) = neigh_table_d(i,j).addr;
+            end
+        end
+
+        total_edges = 0;
+        double_edges = 0;
+        for i = 1:100
+            for j = 1:neigh_max
+                if(neigh_table_addr(i,j) > 0)
+                    total_edges = total_edges + 1;
+                    if isempty(find(neigh_table_addr(neigh_table_addr(i,j),:) == i)) == 0
+                        double_edges = double_edges + 1;
+                    end
+                end
+            end
+        end
+        mutual_match_percent(test_frame/picture_seconds/100) = double_edges/total_edges;
+        
+        total_edges = 0;
+        double_edges = 0;
+        for i = 1:100
+            for j = 1:neigh_max
+                if((neigh_table_addr(i,j) > 0) && (node_distance(i,j) < best_radis))
+                    total_edges = total_edges + 1;
+                    if isempty(find(neigh_table_addr(neigh_table_addr(i,j),:) == i)) == 0
+                        double_edges = double_edges + 1;
+                    end
+                end
+            end
+        end
+        mutual_best_match_percent(test_frame/picture_seconds/100) = double_edges/total_edges;
     end
 
-    if rem(test_frame, picture_seconds*100*20) == 0
+    if rem(test_frame, picture_seconds*100*100) == 0
         plot(mean(neigh_match_percent(:,1:test_frame/picture_seconds/100)));
         xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_match_percent(:,1:test_frame/picture_seconds/100)))) ' ']);
         print('-dpng','-zbuffer','-r200',' match_neigh');
@@ -243,6 +303,14 @@ for test_frame = 1:test_duration
         plot(mutual_match_percent(1:test_frame/picture_seconds/100));
         xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_match_percent(1:test_frame/picture_seconds/100))) ' ']);
         print('-dpng','-zbuffer','-r200','mutual_neigh');
+        
+        plot(mean(neigh_best_match_percent(:,1:test_frame/picture_seconds/100)));
+        xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_best_match_percent(:,1:test_frame/picture_seconds/100)))) ' ']);
+        print('-dpng','-zbuffer','-r200',' match_best_neigh');
+
+        plot(mutual_best_match_percent(1:test_frame/picture_seconds/100));
+        xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_best_match_percent(1:test_frame/picture_seconds/100))) ' ']);
+        print('-dpng','-zbuffer','-r200','mutual_best_neigh');
     end
 end
 
@@ -253,3 +321,11 @@ print('-dpng','-zbuffer','-r200',' match_neigh');
 plot(mutual_match_percent);
 xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_match_percent)) ' ']);
 print('-dpng','-zbuffer','-r200','mutual_neigh');
+
+plot(mean(neigh_best_match_percent));
+xlabel([' average match neigh percent,  ' num2str(mean(mean(neigh_best_match_percent))) ' ']);
+print('-dpng','-zbuffer','-r200',' match_best_neigh');
+
+plot(mutual_best_match_percent);
+xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_best_match_percent)) ' ']);
+print('-dpng','-zbuffer','-r200','mutual_best_neigh');
