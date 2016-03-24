@@ -48,6 +48,7 @@ neigh_match_percent = zeros(100,test_seconds/picture_seconds);
 mutual_match_percent = zeros(1,test_seconds/picture_seconds);
 neigh_best_match_percent = zeros(100,test_seconds/picture_seconds);
 mutual_best_match_percent = zeros(1,test_seconds/picture_seconds);
+mutual_five_match_percent = zeros(1,test_seconds/picture_seconds);
 
 node_distance = zeros([100 100]);
 for i = 1:100
@@ -116,8 +117,7 @@ for test_frame = 1:test_duration
                         %need not to do anything, could not hear this hb
                         %no code here
                     end
-                    
-                end                
+                end
             end
             hb_time(node) = hb_time(node) + 100 + round(rand(1)*10);
         end
