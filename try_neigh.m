@@ -300,3 +300,5 @@ print('-dpng','-zbuffer','-r200',' match_best_neigh');
 plot(mutual_best_match_percent);
 xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_best_match_percent)) ' ']);
 print('-dpng','-zbuffer','-r200','mutual_best_neigh');
+
+save 20_result neigh_match_percent mutual_match_percent neigh_best_match_percent mutual_best_match_percent mutual_five_match_percent neigh_table
