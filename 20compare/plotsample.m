@@ -1,0 +1,67 @@
+clear all;
+load('20compare.mat');
+plot(1:length(mean(old_20_neigh_match_percent)),mean(old_20_neigh_match_percent),'r');
+hold on;
+plot(1:length(mean(new_20_neigh_match_percent)),mean(new_20_neigh_match_percent),'b');
+axis([0 length(mean(new_20_neigh_match_percent)) 0 1]);
+legend('踢时间最老','踢质量最差');
+title('实际邻居表和理想邻居表的吻合度比较,邻居表max20');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_neigh_compare_old_bad_20');
+
+plot(1:length(mean(old_20_neigh_best_match_percent)),mean(old_20_neigh_best_match_percent),'r');
+hold on;
+plot(1:length(mean(new_20_neigh_best_match_percent)),mean(new_20_neigh_best_match_percent),'b');
+axis([0 length(mean(new_20_neigh_best_match_percent)) 0 1]);
+legend('踢时间最老','踢质量最差');
+title('理想邻居表中通信满分，在实际邻居表中的吻合度比较,邻居表max20');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_best_neigh_compare_old_bad_20');
+
+plot(1:length(old_20_mutual_match_percent),old_20_mutual_match_percent,'r');
+hold on;
+plot(1:length(new_20_mutual_match_percent),new_20_mutual_match_percent,'b');
+axis([0 length(new_20_mutual_match_percent) 0 1]);
+legend('踢时间最老','踢质量最差');
+title('双向邻居表比例,邻居表max20');
+xlabel('时间');
+ylabel('比例');
+hold off;
+print('-dpng','-zbuffer','-r200',' mutual_neigh_compare_old_bad_20');
+
+plot(1:length(mean(new_20_neigh_match_percent)),mean(new_20_neigh_match_percent),'r');
+hold on;
+plot(1:length(mean(br_20_neigh_match_percent)),mean(br_20_neigh_match_percent),'b');
+axis([0 length(mean(new_20_neigh_match_percent)) 0 1]);
+legend('踢质量最差','加分加保护');
+title('实际邻居表和理想邻居表的吻合度比较,邻居表max20');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_neigh_compare_bad_br_20');
+
+plot(1:length(mean(new_20_neigh_best_match_percent)),mean(new_20_neigh_best_match_percent),'r');
+hold on;
+plot(1:length(mean(br_20_neigh_best_match_percent)),mean(br_20_neigh_best_match_percent),'b');
+axis([0 length(mean(new_20_neigh_best_match_percent)) 0 1]);
+legend('踢质量最差','加分加保护');
+title('理想邻居表中通信满分，在实际邻居表中的吻合度比较,邻居表max20');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_best_neigh_compare_bad_br_20');
+
+plot(1:length(new_20_mutual_match_percent),new_20_mutual_match_percent,'r');
+hold on;
+plot(1:length(br_20_mutual_match_percent),br_20_mutual_match_percent,'b');
+axis([0 length(new_20_mutual_match_percent) 0 1]);
+legend('踢质量最差','加分加保护');
+title('双向邻居表比例,邻居表max20');
+xlabel('时间');
+ylabel('比例');
+hold off;
+print('-dpng','-zbuffer','-r200',' mutual_neigh_compare_bad_br_20');

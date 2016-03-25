@@ -1,0 +1,56 @@
+clear all;
+load('10compare.mat');
+plot(1:length(mean(new_10_neigh_match_percent)),mean(new_10_neigh_match_percent),'r');
+hold on;
+plot(1:length(mean(br_10_neigh_match_percent)),mean(br_10_neigh_match_percent),'b');
+axis([0 length(mean(new_10_neigh_match_percent)) 0 1]);
+legend('踢质量最差','加分加保护');
+title('实际邻居表和理想邻居表的吻合度比较,邻居表max10');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_neigh_compare_bad_br_10');
+
+plot(1:length(mean(new_10_neigh_best_match_percent)),mean(new_10_neigh_best_match_percent),'r');
+hold on;
+plot(1:length(mean(br_10_neigh_best_match_percent)),mean(br_10_neigh_best_match_percent),'b');
+axis([0 length(mean(new_10_neigh_best_match_percent)) 0 1]);
+legend('踢质量最差','加分加保护');
+title('理想邻居表中通信满分，在实际邻居表中的吻合度比较,邻居表max10');
+xlabel('时间');
+ylabel('吻合度');
+hold off;
+print('-dpng','-zbuffer','-r200',' match_best_neigh_compare_bad_br_10');
+
+plot(1:length(new_10_mutual_match_percent),new_10_mutual_match_percent,'r');
+hold on;
+plot(1:length(br_10_mutual_match_percent),br_10_mutual_match_percent,'b');
+axis([0 length(new_10_mutual_match_percent) 0 1]);
+legend('踢质量最差','加分加保护');
+title('双向邻居比例,邻居表max10');
+xlabel('时间');
+ylabel('比例');
+hold off;
+print('-dpng','-zbuffer','-r200',' mutual_neigh_compare_bad_br_10');
+
+plot(1:length(new_10_mutual_best_match_percent),new_10_mutual_best_match_percent,'r');
+hold on;
+plot(1:length(br_10_mutual_best_match_percent),br_10_mutual_best_match_percent,'b');
+axis([0 length(new_10_mutual_best_match_percent) 0 1]);
+legend('踢质量最差','加分加保护');
+title('满分双向邻表比例,邻居表max10');
+xlabel('时间');
+ylabel('比例');
+hold off;
+print('-dpng','-zbuffer','-r200',' mutual_best_neigh_compare_bad_br_10');
+
+plot(1:length(new_10_mutual_five_match_percent),new_10_mutual_five_match_percent,'r');
+hold on;
+plot(1:length(br_10_mutual_five_match_percent),br_10_mutual_five_match_percent,'b');
+axis([0 length(new_10_mutual_five_match_percent) 0 1]);
+legend('踢质量最差','加分加保护');
+title('top5双向邻表比例,邻居表max10');
+xlabel('时间');
+ylabel('比例');
+hold off;
+print('-dpng','-zbuffer','-r200',' mutual_five_neigh_compare_bad_br_10');
