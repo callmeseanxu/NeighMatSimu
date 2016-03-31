@@ -5,13 +5,14 @@ test_seconds = 5000;
 picture_seconds = 5;
 poor_radis = 40;
 best_radis = 10;
-neigh_max = 20;
+neigh_max = 10;
 test_duration = test_seconds*100;   %this is 600s
 target_addr = 65;
 best_neigh_limit = 10;
 mutual_best_num = 5;
 
 hb_time = round(rand([1 100])*100);
+last_hb_time = zeros([1 100]);
 hb_count = zeros([1 100]);
 
 %predefine th size
@@ -66,7 +67,7 @@ for test_frame = 1:test_duration
                                 first_inactive = neigh_index;
                             end
 
-                            if (worst_index == 0) || ((neigh_table(othernode, neigh_index).protection_time <= 0) && ((bitcount(neigh_table(othernode, neigh_index).linkq) + neigh_table(othernode, neigh_index).extra_score) < (bitcount(neigh_table(othernode, worst_index).linkq) + neigh_table(othernode, worst_index).extra_score)))
+                            if (neigh_table(othernode, neigh_index).protection_time <= 0) && ((worst_index == 0) || ((bitcount(neigh_table(othernode, neigh_index).linkq) + neigh_table(othernode, neigh_index).extra_score) < (bitcount(neigh_table(othernode, worst_index).linkq) + neigh_table(othernode, worst_index).extra_score)))
                                 worst_index = neigh_index;
                             end
                             
@@ -89,10 +90,13 @@ for test_frame = 1:test_duration
                                 end
                                 if(neigh_table(othernode, neigh_index).protection_time > 0)
                                     neigh_table(othernode, neigh_index).protection_time = neigh_table(othernode, neigh_index).protection_time - 1;
+                                    if neigh_table(othernode, neigh_index).protection_time == 0
+                                        neigh_table(othernode, neigh_index).extra_score = 0;
+                                    end
                                 end
                             else
                                 if first_inactive == 0      %this means table is full
-                                    if protection_neigh_count < 20
+                                    if protection_neigh_count < neigh_max
                                         neigh_table(othernode, worst_index).addr = node;
                                         neigh_table(othernode, worst_index).last_seen = test_frame;
                                         neigh_table(othernode, worst_index).linkq = 1;
@@ -118,6 +122,9 @@ for test_frame = 1:test_duration
                                 
                                 if(neigh_table(othernode, neigh_index).protection_time > 0)
                                     neigh_table(othernode, neigh_index).protection_time = neigh_table(othernode, neigh_index).protection_time - 1;
+                                    if neigh_table(othernode, neigh_index).protection_time == 0
+                                        neigh_table(othernode, neigh_index).extra_score = 0;
+                                    end
                                 end                               
                             end
                         end
@@ -127,18 +134,19 @@ for test_frame = 1:test_duration
                     end
                 end
             end
+            last_hb_time(node) = hb_time(node);
             hb_time(node) = hb_time(node) + 100 + round(rand(1)*10);
             hb_count(node) = hb_count(node) + 1;
         end
-        if rem(hb_count(node), 16) == 15
+        if (rem(hb_count(node), 16) == 15) && (test_frame == last_hb_time(node))
             %first, find best neighs
             j = 0;
             neigh_target = 0;
             for i = 1:neigh_max
-                if neigh_table_d(node,i).addr > 0
+                if neigh_table(node,i).addr > 0
                     j = j + 1;
-                    neigh_target(j,1) = neigh_table_d(node,i).addr;
-                    neigh_target(j,2) = neigh_table_d(node,i).linkq;
+                    neigh_target(j,1) = neigh_table(node,i).addr;
+                    neigh_target(j,2) = bitcount(neigh_table(node,i).linkq);
                 end
             end
 
@@ -156,11 +164,11 @@ for test_frame = 1:test_duration
                             first_inactive = neigh_index;
                         end
                         
-                        if (worst_index == 0) || ((neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time <= 0) && ((bitcount(neigh_table(neigh_target_sort(brother_index,1), neigh_index).linkq) + neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score) < (bitcount(neigh_table(neigh_target_sort(brother_index,1), worst_index).linkq) + neigh_table(neigh_target_sort(brother_index,1), worst_index).extra_score)))
+                        if (neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time <= 0) && ((worst_index == 0) || ((bitcount(neigh_table(neigh_target_sort(brother_index,1), neigh_index).linkq) + neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score) < (bitcount(neigh_table(neigh_target_sort(brother_index,1), worst_index).linkq) + neigh_table(neigh_target_sort(brother_index,1), worst_index).extra_score)))
                             worst_index = neigh_index;
                         end
                         
-                        if neigh_table(othernode, neigh_index).protection_time > 0
+                        if neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time > 0
                             protection_neigh_count = protection_neigh_count + 1;
                         end
                             
@@ -183,7 +191,7 @@ for test_frame = 1:test_duration
                         neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time = 32;
                     else
                         if first_inactive == 0      %this means table is full
-                            if protection_neigh_count < 20
+                            if protection_neigh_count < neigh_max
                                 neigh_table(neigh_target_sort(brother_index,1), worst_index).addr = node;
                                 neigh_table(neigh_target_sort(brother_index,1), worst_index).last_seen = test_frame;
                                 neigh_table(neigh_target_sort(brother_index,1), worst_index).linkq = 1;
