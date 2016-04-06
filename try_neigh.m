@@ -84,9 +84,9 @@ for test_frame = 1:test_duration
                                 break
                             end
                         end
-                        rand_num = round(rand(1)*poor_radis);
-                        %if (x < best_radis) || (rand_num > (x - best_radis))
-                        if rand_num > x
+                        rand_num = round(rand(1)*(poor_radis - best_radis));
+                        if (x < best_radis) || (rand_num > (x - best_radis))
+                        %if rand_num > x
                             if found_in_neigh_table > 0
                                 neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2 + 1;
                                 if neigh_table(othernode, neigh_index).linkq >= 65536

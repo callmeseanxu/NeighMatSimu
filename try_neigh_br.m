@@ -5,7 +5,7 @@ test_seconds = 5000;
 picture_seconds = 5;
 poor_radis = 40;
 best_radis = 10;
-neigh_max = 10;
+neigh_max = 20;
 test_duration = test_seconds*100;   %this is 600s
 target_addr = 65;
 best_neigh_limit = 10;
@@ -67,12 +67,8 @@ for test_frame = 1:test_duration
                                 first_inactive = neigh_index;
                             end
 
-                            if (neigh_table(othernode, neigh_index).protection_time <= 0) && ((worst_index == 0) || ((bitcount(neigh_table(othernode, neigh_index).linkq) + neigh_table(othernode, neigh_index).extra_score) < (bitcount(neigh_table(othernode, worst_index).linkq) + neigh_table(othernode, worst_index).extra_score)))
+                            if ((worst_index == 0) || ((bitcount(neigh_table(othernode, neigh_index).linkq) + neigh_table(othernode, neigh_index).extra_score) < (bitcount(neigh_table(othernode, worst_index).linkq) + neigh_table(othernode, worst_index).extra_score)))
                                 worst_index = neigh_index;
-                            end
-                            
-                            if neigh_table(othernode, neigh_index).protection_time > 0
-                                protection_neigh_count = protection_neigh_count + 1;
                             end
 
                             if node == neigh_table(othernode, neigh_index).addr
@@ -80,9 +76,9 @@ for test_frame = 1:test_duration
                                 break
                             end
                         end
-                        rand_num = round(rand(1)*poor_radis);
-                        %if (x < best_radis) || (rand_num > (x - best_radis))
-                        if rand_num > x
+                        rand_num = round(rand(1)*(poor_radis - best_radis));
+                        if (x < best_radis) || (rand_num > (x - best_radis))
+                        %if rand_num > x
                             if found_in_neigh_table > 0
                                 neigh_table(othernode, neigh_index).linkq = neigh_table(othernode, neigh_index).linkq*2 + 1;
                                 if neigh_table(othernode, neigh_index).linkq >= 65536
@@ -96,7 +92,9 @@ for test_frame = 1:test_duration
                                 end
                             else
                                 if first_inactive == 0      %this means table is full
-                                    if protection_neigh_count < neigh_max
+                                    %if worst node is protected, do not
+                                    %kick out.
+                                    if neigh_table(othernode, worst_index).protection_time <= 0
                                         neigh_table(othernode, worst_index).addr = node;
                                         neigh_table(othernode, worst_index).last_seen = test_frame;
                                         neigh_table(othernode, worst_index).linkq = 1;
@@ -171,8 +169,9 @@ for test_frame = 1:test_duration
                         if neigh_table(neigh_target_sort(brother_index,1), neigh_index).protection_time > 0
                             protection_neigh_count = protection_neigh_count + 1;
                         end
-                            
-                        if ((least_extra_index == 0) || (neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score < neigh_table(neigh_target_sort(brother_index,1), least_extra_index).extra_score))
+                        
+                        %find least extra score, and worst quality
+                        if ((least_extra_index == 0) || (neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score < neigh_table(neigh_target_sort(brother_index,1), least_extra_index).extra_score) || ((neigh_table(neigh_target_sort(brother_index,1), neigh_index).extra_score == neigh_table(neigh_target_sort(brother_index,1), least_extra_index).extra_score) && (bitcount(neigh_table(neigh_target_sort(brother_index,1), neigh_index).linkq) < bitcount(neigh_table(neigh_target_sort(brother_index,1), least_extra_index).linkq))))
                             least_extra_index = neigh_index;
                         end
                         
@@ -413,4 +412,4 @@ plot(mutual_best_match_percent);
 xlabel([' average mutual neigh percent,  ' num2str(mean(mutual_best_match_percent)) ' ']);
 print('-dpng','-zbuffer','-r200','mutual_best_neigh');
 
-save br_10_result neigh_match_percent mutual_match_percent neigh_best_match_percent mutual_best_match_percent mutual_five_match_percent neigh_table
+save br_20_result neigh_match_percent mutual_match_percent neigh_best_match_percent mutual_best_match_percent mutual_five_match_percent neigh_table
